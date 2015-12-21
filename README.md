@@ -23,7 +23,7 @@ References:
 * http://people.seas.harvard.edu/~jsnoek/nips2013transfer.pdf
 * http://www.cs.toronto.edu/~zemel/documents/bayesopt-warping.pdf
 
-To learn more about GPs, read the references above, or watch the amazing lectures of Prof. Nando de Freitas [on]https://www.youtube.com/watch?v=4vGiHC35j9s [the]https://www.youtube.com/watch?v=MfHKW5z-OOA [topic.]https://www.youtube.com/watch?v=vz3D36VXefI
+To learn more about GPs, read the references above, or watch the amazing lectures of Prof. Nando de Freitas [on](https://www.youtube.com/watch?v=4vGiHC35j9s) [the](https://www.youtube.com/watch?v=MfHKW5z-OOA) [topic.](https://www.youtube.com/watch?v=vz3D36VXefI)
 
 
 
