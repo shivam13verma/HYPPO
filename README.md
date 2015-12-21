@@ -19,10 +19,11 @@ Future additions:
 References:
 * http://papers.nips.cc/paper/4522-practical-bayesian-optimization-of-machine-learning-algorithms.pdf
 * http://arxiv.org/pdf/1012.2599.pdf
+* http://www.iro.umontreal.ca/~bengioy/cifar/NCAP2014-summerschool/slides/Ryan_adams_140814_bayesopt_ncap.pdf
 * http://people.seas.harvard.edu/~jsnoek/nips2013transfer.pdf
 * http://www.cs.toronto.edu/~zemel/documents/bayesopt-warping.pdf
 
-To learn more about GPs, watch the amazing lectures of Prof. Nando de Freitas on the topic.
-[GitHub](http://github.com)
+To learn more about GPs, read the references above, or watch the amazing lectures of Prof. Nando de Freitas [on]https://www.youtube.com/watch?v=4vGiHC35j9s [the]https://www.youtube.com/watch?v=MfHKW5z-OOA [topic.]https://www.youtube.com/watch?v=vz3D36VXefI
+
 
 
