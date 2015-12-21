@@ -25,5 +25,5 @@ References:
 
 To learn more about GPs, read the references above, or watch the amazing lectures from Prof. Nando de Freitas [on](https://www.youtube.com/watch?v=4vGiHC35j9s) [the](https://www.youtube.com/watch?v=MfHKW5z-OOA) [topic.](https://www.youtube.com/watch?v=vz3D36VXefI)
 
-
-
+Authors (in alphabetic order):
+Adarsh Jois, Shivam Verma (New York University)
