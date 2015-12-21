@@ -3,6 +3,8 @@ HYPer-Parameter Optimization: Bayesian optimization using Gaussian processes for
 
 This is a library for doing hyperparameter tuning based on in Machine Learning models using the popular library scikit-learn.
 
+How to use: Check out the file "slice_example.py" for an example.
+
 Current features:
 * Does sequential Bayesian Optimization using GPs
 * Easy to use and implement for current scikit-learn users
@@ -11,7 +13,8 @@ Current features:
 * Uses scikit-learn's Gaussian Processes module (which does not include Matern kernel as of now)
 
 Future additions:
-* Parallel Bayesian Optimization using slice sampling
+* Installing via pip! (coming soon)
+* Parallel Bayesian Optimization using slice sampling (coming soon)
 * Custom Gaussian Processes (see gaussian_process folder) module including Matern32/52 kernels
 * Implementation of Tree Parzen Estimators
 * Multi-task Bayesian Optimization, input-warping
