@@ -5,7 +5,7 @@
 from sklearn.svm import SVC
 from sklearn.datasets import load_svmlight_file
 from sklearn.cross_validation import cross_val_score
-from hypop import BayesOptCV
+from hyppo import BayesOptCV
 import matplotlib.pyplot as plt
 
 def get_data(fpath):
@@ -34,19 +34,18 @@ sigma = 0.02  # noise variance.
 def sin(C):
     
     return f(C) + sigma * np.random.randn(1)[0]
-def svccv(C, gamma):
-    return 1 - cross_val_score(SVC(C=C, kernel='rbf', gamma=gamma , random_state=2),
+def svccv(C):
+    return 1 - cross_val_score(SVC(C=C, kernel='poly', degree=3 , random_state=2),
                            train_data, train_labels, 'f1', cv=5).mean()
                            
-svcBO = BayesOptCV(svccv, param_grid={'C':{'type':'float', 'min':6.4e-05, 'max':60},
-                                      'gamma':{'type':'float', 'min':6.4e-5, 'max':10}},
+svcBO = BayesOptCV(svccv, param_grid={'C':{'type':'float', 'min':6.4e-05, 'max':60}},
                    bigger_is_better=False, verbose=2)
 
 svcBO.initialize(num_init=10, init_grid={'C': [1, 15, 60], 'gamma':[1, 5, 10]})
 # kernel_param = {'nugget':0.0000001}
-kernel_param = {'theta0':0.1}
+kernel_param = {'theta0':0.5}
 acqui_param = {'kappa':4} 
-svcBO.optimize(kernel_param=kernel_param, acqui_param=acqui_param, n_iter=100, acqui_type='ucb', n_acqui_iter=200)
+svcBO.optimize(kernel_param=kernel_param, acqui_param=acqui_param, n_iter=25, acqui_type='ucb', n_acqui_iter=200)
 print('Final Results')                             
 print('SVC: %f' % svcBO.report['best']['best_val'])
 plt.show()

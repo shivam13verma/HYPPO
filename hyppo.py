@@ -19,7 +19,7 @@ class BayesOptCV(object):
         Performs Gaussian Process-based Bayesian Optimization for optimizing model hyperparameters.
     """
 
-    def __init__(self, fun, param_grid, verbose=1, if_noise=True, bigger_is_better=True, obj=''):
+    def __init__(self, fun, param_grid, verbose=1, if_noise=True, bigger_is_better=True, obj='', if_plot=True):
         
         self.param_grid = param_grid
         self.param_num = len(param_grid)
@@ -40,7 +40,8 @@ class BayesOptCV(object):
         self.Y = []
         self.report = {}
         self.bigger_is_better = bigger_is_better
-        self.obj_xtest = np.linspace(self.param_lims[0][0], self.param_lims[0][1], 50)
+        self.obj_xtest = np.linspace(self.param_lims[0][0], self.param_lims[0][1], 50) #for plotting
+        self.if_plot = if_plot
         # self.obj = [obj(x_test) for x_test in self.obj_xtest]
 
 
@@ -72,25 +73,17 @@ class BayesOptCV(object):
         print self.X
         print self.Y
         self.if_init = True
+        
+    def remove_gp_duplicates(self, x):
+        
+        order = np.lexsort(x.T)
+        new_order = np.argsort(order)
     
-    def unique_rows(self, a):
-       """
-       A functions to trim repeated rows that may appear when optimizing.
-       This is necessary to avoid the sklearn GP object from breaking
-       :param a: array to trim repeated rows from
-       :return: mask of unique rows
-       """
-    
-       # Sort array and kep track of where things should go back to
-       order = np.lexsort(a.T)
-       reorder = np.argsort(order)
-    
-       a = a[order]
-       diff = np.diff(a, axis=0)
-       ui = np.ones(len(a), 'bool')
-       ui[1:] = (diff != 0).any(axis=1)
-    
-       return ui[reorder]
+        x = x[order]
+        diff = np.diff(x, axis=0)
+        dedup = np.ones(len(x), 'bool')
+        dedup[1:] = (diff != 0).any(axis=1)
+        return dedup[new_order]
 
     def maximize_acquisition(self, acqui_fun, gp, y_max, n_acqui_iter=25):
         """
@@ -125,16 +118,6 @@ class BayesOptCV(object):
 #                         ei_best = min_xy.fun
                         
         return x_best, ei_best
-        
-#    def remove_gp_duplicates(x):
-#        
-#        order = np.lexsort(x.T)
-#        new_order = np.argsort(order)
-#    
-#        x = x[order]
-#        diff = np.diff(x, axis=0)
-#        dedup = np.ones(len(x), 'bool')
-#        dedup[1:] = (diff != 0).any(axis=1)
 #    
 #        return dedup[new_order]
     def plot_gp(self, mus_and_covs):
@@ -143,11 +126,17 @@ class BayesOptCV(object):
         Xtest = self.obj_xtest
         sns.subplot(211)
         sns.plot(self.X, 1.0 - self.Y, 'r+', ms=10)
+        sns.plot(Xtest.flat, mus,'k')
+        #sns.savefig('/Users/shivamverma/Desktop/cvplot.pdf')
         # sns.plot(Xtest, self.obj, 'b-')
     
         sns.gca().fill_between(Xtest.flat, (mus - 3 * np.sqrt(diag_cov)).flat,
                           (mus + 3 * np.sqrt(diag_cov)).flat,
                           where=None, color="#dddddd")
+        sns.xlabel('C')
+        sns.ylabel('CV Error')
+        #plt.legend((line1, line2, line3), ('label1', 'label2', 'label3'))
+        sns.legend(['Observations','Mean','Variance'],loc='center left', bbox_to_anchor=(1, 0.5))
 
 # # optimize acquisition function
     def optimize(self, acqui_param, kernel_param, n_iter=25, acqui_type='pi', n_acqui_iter=50, kernel_type='squared_exponential'):
@@ -158,12 +147,14 @@ class BayesOptCV(object):
         
         
         Returns:
-        """        
+        """ 
+        import time
+        timestr = time.strftime("%Y%m%d%H%M")
         if not self.if_init:
             self.initialize(num_init=5, init_grid={})
         # for custom GP
         gp = GP(corr=kernel_type, **kernel_param)
-        ur = self.unique_rows(self.X)
+        ur = self.remove_gp_duplicates(self.X)
         gp.fit(self.X[ur], self.Y[ur])
         
         # for sklearn GP
@@ -186,13 +177,14 @@ class BayesOptCV(object):
         for i in range(n_iter):
             self.X = np.concatenate((self.X, x_max.reshape((1, len(self.param_keys)))), axis=0)
             self.Y = np.append(self.Y, self.fun(**dict(zip(self.param_keys, x_max))))
-            ur = self.unique_rows(self.X)
+            ur = self.remove_gp_duplicates(self.X)
+            print self.X
             gp.fit(self.X[ur], self.Y[ur])
-
-#             mus_and_covs = [gp.predict(x_test, eval_MSE=True) for x_test in self.obj_xtest]
-#             
-#             # diag_cov = np.diag(covs).reshape(-1, 1)
-#             self.plot_gp(mus_and_covs)
+            if self.if_plot:
+                mus_and_covs = [gp.predict(x_test, eval_MSE=True) for x_test in self.obj_xtest]
+                self.plot_gp(mus_and_covs)
+             # diag_cov = np.diag(covs).reshape(-1, 1)
+                 
             if self.Y[-1] > y_max:
                 y_max = self.Y[-1]
             x_max, ei_best = self.maximize_acquisition(acqui_fun=acqui_fun, gp=gp, y_max=y_max, n_acqui_iter=n_acqui_iter)
@@ -204,11 +196,13 @@ class BayesOptCV(object):
                     print 'params{}'.format(dict(zip(self.param_keys, self.X[self.Y.argmax()])))
                 else:
                     print 'best so far {}'.format(self.Y.min())
-                    print 'params{}'.format(dict(zip(self.param_keys, self.X[self.Y.argmin()])))
-                    
-                    
-#             self.plot_acquisition(acqui_fun, x_max, gp, y_max, ei_best, oned_index=0)
-#             sns.show()
+                    print 'params{}'.format(dict(zip(self.param_keys, self.X[self.Y.argmin()])))    
+            if self.if_plot:
+                self.plot_acquisition(acqui_fun, x_max, gp, y_max, ei_best, oned_index=0)
+                sns.show()
+                sns.title('t = '+str(i))
+                sns.savefig('/Users/shivamverma/Documents/HYPPO/plots/Hyppo_comparison_'+timestr+'_'+str(i)+'_'+'_.pdf')
+                sns.savefig('/Users/shivamverma/Documents/HYPPO/plots/Hyppo_comparison_'+timestr+'_'+str(i)+'_'+'_.png')
         if self.bigger_is_better:
             self.report['best'] = {'best_val': self.Y.max(), 'best_param': dict(zip(self.param_keys, self.X[self.Y.argmax()]))}
         else:
@@ -229,11 +223,36 @@ class BayesOptCV(object):
     def plot_acquisition(self, acqui_fun, x_max, gp, y_max, ei_best, oned_index=0, twod_index=0, if2D=False):
         if not if2D:
             sns.subplot(212)
+#            ei_acqui = acquisition_function(acqui_type='ei')
+#            ei_acqui_fun = ei_acqui.set_function()
+#            pi_acqui = acquisition_function(acqui_type='pi')
+#            pi_acqui_fun = pi_acqui.set_function()
+#            ei_x_max, ei_ei_best = self.maximize_acquisition(acqui_fun=ei_acqui_fun, gp=gp, y_max=y_max, n_acqui_iter=200)
+#            pi_x_max, pi_ei_best = self.maximize_acquisition(acqui_fun=pi_acqui_fun, gp=gp, y_max=y_max, n_acqui_iter=200)
+##            
             x_p = np.linspace(self.param_lims[oned_index][0], self.param_lims[oned_index][1], 100)
             y_p = np.array([acqui_fun(gp=gp, x=x0.reshape(1, -1), y_max=y_max) for x0 in x_p])
-            sns.plot(x_p, y_p.flatten())
+            
+#            ei_x_p = np.linspace(self.param_lims[oned_index][0], self.param_lims[oned_index][1], 100)
+#            ei_y_p = np.array([ei_acqui_fun(gp=gp, x=x0.reshape(1, -1), y_max=y_max) for x0 in x_p])
+#            pi_x_p = np.linspace(self.param_lims[oned_index][0], self.param_lims[oned_index][1], 100)
+#            pi_y_p = np.array([pi_acqui_fun(gp=gp, x=x0.reshape(1, -1), y_max=y_max) for x0 in x_p])
+##            
+            sns.plot(x_p, y_p.flatten()) #UCB
+#            sns.plot(ei_x_p, ei_y_p.flatten())
+#            sns.plot(pi_x_p, pi_y_p.flatten())
+
+            
             ei_best2 = acqui_fun(gp=gp, x=x_max.reshape(1, -1), y_max=y_max)
-            sns.plot(x_max, ei_best2, 'ro')
+            sns.plot(x_max, ei_best, 'ro')
+#            sns.plot(ei_x_max, ei_ei_best, 'ro')
+#            sns.plot(pi_x_max, pi_ei_best, 'ro')
+#            sns.title('Cross Validation Error vs. C')
+            sns.xlabel('C')
+            sns.ylabel('Acquisition function')
+            #plt.legend((line1, line2, line3), ('label1', 'label2', 'label3'))
+            sns.legend(['GP-UCB'],loc='center left', bbox_to_anchor=(1, 0.5))
+#            sns.legend(['GP-UCB','EI','PI'],loc='center left', bbox_to_anchor=(1, 0.5))
 
 #    def get_best_model(self, X, y):
 #        train_X, train_y = X, y
@@ -282,7 +301,7 @@ class acquisition_function(object):
     Acquisition function for performing Bayesian Optimization. Includes PI, EI, GP-UCB.
     """
     
-    def __init__(self, acqui_type='ei', eta=1, kappa=2):
+    def __init__(self, acqui_type='ei', eta=0.01, kappa=2):
         self.acqui_type = acqui_type
         self.eta = eta
         self.kappa = kappa
@@ -315,7 +334,7 @@ class acquisition_function(object):
         if var == 0:
             return 1
         else:
-            Z = (mu - y_max) / np.sqrt(var)
+            Z = (mu - y_max - self.eta) / np.sqrt(var)
             return norm.cdf(Z)
 
 

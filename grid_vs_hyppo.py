@@ -4,7 +4,7 @@
 from sklearn.svm import SVC
 from sklearn.datasets import load_svmlight_file
 from sklearn.cross_validation import cross_val_score
-from hypop import BayesOptCV
+from hyppo import BayesOptCV
 from sklearn.grid_search import GridSearchCV, RandomizedSearchCV
 import matplotlib as mpl
 mpl.use('Agg')
@@ -60,25 +60,26 @@ def do_bayes_opt_for(n):
     svcBO.initialize(num_init=3)
     kernel_param = {'theta0':0.5}
     acqui_param = {'kappa':2}
-    svcBO.optimize(kernel_param=kernel_param, acqui_param=acqui_param, n_iter=n - 3, acqui_type='pi', n_acqui_iter=200)
+    svcBO.optimize(kernel_param=kernel_param, acqui_param=acqui_param, n_iter=n - 3, acqui_type='ucb', n_acqui_iter=200)
     return svcBO.get_best()
 
 grid_errs = []
 rs_errs = []
 bayes_opt_errs = []
-Ns = range(5, 6)
-n_i = 2
+Ns = range(10,100,5) #number of func evals
+n_i = 1 #number of evals
 for i in range(n_i):
     print '***********************************'
-    print str(i)
+    print str(i+1)
     
     for n in Ns:
         grid_errs.append(1 - do_grid_search_for(n))
-        print 'Grid Done'
+        print 'Grid done'
         rs_errs.append(1 - do_random_search_for(n))
         print 'Random done'
         bayes_opt_errs.append(1 - do_bayes_opt_for(n))
         print 'Bayes done'
+        
 
 grid_errs = np.array(grid_errs).reshape(n_i, -1)
 rs_errs = np.array(rs_errs).reshape(n_i, -1)
@@ -91,24 +92,32 @@ bayes_opt_err_means = bayes_opt_errs.mean(axis=0)
 grid_errs_stds = grid_errs.std(axis=0)
 rs_errs_stds = rs_errs.std(axis=0)
 bayes_opt_err_stds = bayes_opt_errs.std(axis=0)
-    
-pickle.dump(grid_errs, open('grid_errs.dump', 'wb'))
-pickle.dump(rs_errs, open('rs_errs.dump', 'wb'))
-pickle.dump(bayes_opt_errs, open('bayes.dump', 'wb'))
 
-pickle.dump(grid_errs_means, open('grid_errs_means.dump', 'wb'))
-pickle.dump(rs_errs_means, open('rs_errs_means.dump', 'wb'))
-pickle.dump(bayes_opt_err_means, open('bayes_means.dump', 'wb'))
+import time
+timestr = time.strftime("%Y%m%d%H%M")
 
-pickle.dump(grid_errs_stds, open('grid_errs_stds.dump', 'wb'))
-pickle.dump(rs_errs_stds, open('rs_errs_stds.dump', 'wb'))
-pickle.dump(bayes_opt_err_stds, open('bayes_stds.dump', 'wb'))
+pickle.dump(grid_errs, open('grid_errs_'+timestr+'.dump', 'wb'))
+pickle.dump(rs_errs, open('rs_errs_'+timestr+'.dump', 'wb'))
+pickle.dump(bayes_opt_errs, open('bayes_'+timestr+'.dump', 'wb'))
+
+pickle.dump(grid_errs_means, open('grid_errs_means_'+timestr+'.dump', 'wb'))
+pickle.dump(rs_errs_means, open('rs_errs_means_'+timestr+'.dump', 'wb'))
+pickle.dump(bayes_opt_err_means, open('bayes_means_'+timestr+'.dump', 'wb'))
+
+pickle.dump(grid_errs_stds, open('grid_errs_stds_'+timestr+'.dump', 'wb'))
+pickle.dump(rs_errs_stds, open('rs_errs_stds_'+timestr+'.dump', 'wb'))
+pickle.dump(bayes_opt_err_stds, open('bayes_stds_'+timestr+'.dump', 'wb'))
 
 
 plt.errorbar(Ns, grid_errs_means, yerr=grid_errs_stds, fmt='o-', color='r')
 plt.errorbar(Ns, rs_errs_means, yerr=rs_errs_stds, fmt='o-', color='g')
 plt.errorbar(Ns, bayes_opt_err_means, yerr=bayes_opt_err_stds, fmt='o-', color='b')
 plt.legend(['Grid Search', 'Random Search', 'HYPPO'])
+plt.title('Comparison of hyperparameter tuning methods')
+plt.xlabel('Number of function evaluations')
+plt.ylabel('CV error')
 
-plt.savefig('Hyppo.pdf')
-plt.savefig('Hyppo.png')
+#print timestr
+
+plt.savefig('/Users/shivamverma/Documents/HYPPO/plots/Hyppo_comparison_'+timestr+'.pdf')
+plt.savefig('/Users/shivamverma/Documents/HYPPO/plots/Hyppo_comparison_'+timestr+'.png')
