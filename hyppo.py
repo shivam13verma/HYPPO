@@ -120,23 +120,7 @@ class BayesOptCV(object):
         return x_best, ei_best
 #    
 #        return dedup[new_order]
-    def plot_gp(self, mus_and_covs):
-        mus = [1 - tup[0] for tup in mus_and_covs]
-        diag_cov = [tup[1] for tup in mus_and_covs]
-        Xtest = self.obj_xtest
-        sns.subplot(211)
-        sns.plot(self.X, 1.0 - self.Y, 'r+', ms=10)
-        sns.plot(Xtest.flat, mus,'k')
-        #sns.savefig('/Users/shivamverma/Desktop/cvplot.pdf')
-        # sns.plot(Xtest, self.obj, 'b-')
-    
-        sns.gca().fill_between(Xtest.flat, (mus - 3 * np.sqrt(diag_cov)).flat,
-                          (mus + 3 * np.sqrt(diag_cov)).flat,
-                          where=None, color="#dddddd")
-        sns.xlabel('C')
-        sns.ylabel('CV Error')
-        #plt.legend((line1, line2, line3), ('label1', 'label2', 'label3'))
-        sns.legend(['Observations','Mean','Variance'],loc='center left', bbox_to_anchor=(1, 0.5))
+
 
 # # optimize acquisition function
     def optimize(self, acqui_param, kernel_param, n_iter=25, acqui_type='pi', n_acqui_iter=50, kernel_type='squared_exponential'):
@@ -181,6 +165,7 @@ class BayesOptCV(object):
             print self.X
             gp.fit(self.X[ur], self.Y[ur])
             if self.if_plot:
+                sns.figure(figsize=(20,10))
                 mus_and_covs = [gp.predict(x_test, eval_MSE=True) for x_test in self.obj_xtest]
                 self.plot_gp(mus_and_covs)
              # diag_cov = np.diag(covs).reshape(-1, 1)
@@ -199,8 +184,11 @@ class BayesOptCV(object):
                     print 'params{}'.format(dict(zip(self.param_keys, self.X[self.Y.argmin()])))    
             if self.if_plot:
                 self.plot_acquisition(acqui_fun, x_max, gp, y_max, ei_best, oned_index=0)
-                sns.show()
-                sns.title('t = '+str(i))
+                #sns.show()
+                sns.title('t = '+str(i),fontsize=18)
+                #my_dpi=96
+                #sns.figure(figsize=(800/my_dpi, 800/my_dpi), dpi=my_dpi)
+                #sns.savefig('my_fig.pdf', dpi=my_dpi)
                 sns.savefig('/Users/shivamverma/Documents/HYPPO/plots/Hyppo_comparison_'+timestr+'_'+str(i)+'_'+'_.pdf')
                 sns.savefig('/Users/shivamverma/Documents/HYPPO/plots/Hyppo_comparison_'+timestr+'_'+str(i)+'_'+'_.png')
         if self.bigger_is_better:
@@ -219,6 +207,24 @@ class BayesOptCV(object):
     
     def get_best(self):
         return self.Y.max()
+        
+    def plot_gp(self, mus_and_covs):
+        mus = [1 - tup[0] for tup in mus_and_covs]
+        diag_cov = [tup[1] for tup in mus_and_covs]
+        Xtest = self.obj_xtest
+        sns.subplot(211)
+        sns.plot(self.X, 1.0 - self.Y, 'r+', ms=15)
+        sns.plot(Xtest.flat, mus,'k',linewidth=2)
+        #sns.savefig('/Users/shivamverma/Desktop/cvplot.pdf')
+        # sns.plot(Xtest, self.obj, 'b-')
+    
+        sns.gca().fill_between(Xtest.flat, (mus - 3 * np.sqrt(diag_cov)).flat,
+                          (mus + 3 * np.sqrt(diag_cov)).flat,
+                          where=None, color="#dddddd")
+        #sns.xlabel('C')
+        sns.ylabel('CV Error',fontsize=18)
+        #plt.legend((line1, line2, line3), ('label1', 'label2', 'label3'))
+        sns.legend(['Observations','Mean','Variance'],loc='center left', bbox_to_anchor=(1, 0.5),fontsize=12)
     
     def plot_acquisition(self, acqui_fun, x_max, gp, y_max, ei_best, oned_index=0, twod_index=0, if2D=False):
         if not if2D:
@@ -238,20 +244,20 @@ class BayesOptCV(object):
 #            pi_x_p = np.linspace(self.param_lims[oned_index][0], self.param_lims[oned_index][1], 100)
 #            pi_y_p = np.array([pi_acqui_fun(gp=gp, x=x0.reshape(1, -1), y_max=y_max) for x0 in x_p])
 ##            
-            sns.plot(x_p, y_p.flatten()) #UCB
+            sns.plot(x_p, y_p.flatten(),linewidth=2) #UCB
 #            sns.plot(ei_x_p, ei_y_p.flatten())
 #            sns.plot(pi_x_p, pi_y_p.flatten())
 
             
             ei_best2 = acqui_fun(gp=gp, x=x_max.reshape(1, -1), y_max=y_max)
-            sns.plot(x_max, ei_best, 'ro')
+            sns.plot(x_max, ei_best, 'ro',ms=15)
 #            sns.plot(ei_x_max, ei_ei_best, 'ro')
 #            sns.plot(pi_x_max, pi_ei_best, 'ro')
 #            sns.title('Cross Validation Error vs. C')
-            sns.xlabel('C')
-            sns.ylabel('Acquisition function')
+            sns.xlabel('C',fontsize=18)
+            sns.ylabel('Acquisition function',fontsize=18)
             #plt.legend((line1, line2, line3), ('label1', 'label2', 'label3'))
-            sns.legend(['GP-UCB'],loc='center left', bbox_to_anchor=(1, 0.5))
+            sns.legend(['GP-UCB'],loc='center left', bbox_to_anchor=(1, 0.5),fontsize=12)
 #            sns.legend(['GP-UCB','EI','PI'],loc='center left', bbox_to_anchor=(1, 0.5))
 
 #    def get_best_model(self, X, y):

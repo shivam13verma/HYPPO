@@ -66,8 +66,8 @@ def do_bayes_opt_for(n):
 grid_errs = []
 rs_errs = []
 bayes_opt_errs = []
-Ns = range(10,100,5) #number of func evals
-n_i = 1 #number of evals
+Ns = range(5,10) #number of func evals
+n_i = 2 #number of evals
 for i in range(n_i):
     print '***********************************'
     print str(i+1)
